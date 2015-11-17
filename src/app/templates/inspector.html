@@ -147,7 +147,7 @@
           height = 600;
 
       // var color = d3.scale.category20b();
-      var color2 = d3.scale.ordinal().range(colorbrewer.Set3[12]);
+      var color2 = d3.scale.ordinal().range(colorbrewer.RdBu[11]);
 
       var color = d3.scale.ordinal().range(colorbrewer.Paired[3]);
 
@@ -243,13 +243,22 @@
           .attr('font-size', function(d){ return '2em';})
           .attr('alignment-baseline', 'middle')
           .attr('text-anchor', 'middle')
+          .attr('fill', function(d){
+                                if (d.type == 'person') {
+                                  return "#000";
+                                } else {
+                                  originmap[d.origin] = color2(d.origin); return color2(d.origin);
+                                }
+          })
           .text(function(d) {
                               if (d.type == 'person'){
                                 return '\uf007';
                               } else if (d.type == 'dataset'){
-                                return '\uf187';
+                                return '\uf1b3';
+                              } else if (d.type == 'dimension' && d.origin == 'external'){
+                                return '\uf0c2';
                               } else if (d.type == 'dimension'){
-                                return '\uf013';
+                                return '\uf0c8';
                               }
 
                             });
