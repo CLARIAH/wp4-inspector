@@ -198,7 +198,8 @@
           .on('mouseover', tip.show)
           .on('mouseout', tip.hide)
           .on('click', function(d){
-            window.open('http://data.clariah-sdh.eculture.labs.vu.nl/browse?uri=' + d.name);
+            if (d3.event.defaultPrevented) return;
+            window.open('http://data.clariah-sdh.eculture.labs.vu.nl/browse?uri=' + encodeURIComponent(d.name));
           });
 
       node.append("title")
