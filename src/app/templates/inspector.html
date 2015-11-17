@@ -6,18 +6,7 @@
 
 {% block content %}
 <div class="row">
-  <div class="col-lg-3">
-    <div class='well'>
-      <h4>Legend</h4>
-      <table class='table'>
-        <tr><th>Inner circle</th><td>dataset</td></tr>
-        <tr><th>Outer circle</th><td>resource type</td></tr>
-      </table>
-      <div id='legend'>
-      </div>
-    </div>
-  </div>
-  <div class="col-lg-9">
+  <div class="col-lg-12">
     <div id='graph'></div>
   </div>
 </div>
@@ -57,11 +46,15 @@
   stroke: #ccc;
 }*/
 
-.node text {
+/*.node text {
   pointer-events: none;
   font: 8px sans-serif;
-  color: black;
+  color: white;
   stroke: #000;
+}*/
+
+.d3-tip h5 {
+  color: white;
 }
 
 .d3-tip {
@@ -138,64 +131,19 @@
       // force.edges().apply(force.edges(),edges);
 
       force.start();
-
-      update_legend();
-
     });
 
 
     // First time we load...
     $(function() {
-
         $.get('/inspector/graph', function(data){
-
-          console.log(data);
-
           force = init_graph(data);
-
-          update_legend();
         });
-
-
     });
 
 
-    function update_legend(){
-      $('#legend').empty();
-      var typelist = $('<div></div>');
-      typelist.append('<h5>Types<h5>');
-      var ul = $('<ul class="list-group"></ul>');
-
-
-      types.forEach(function(elem){
-        console.log(elem);
-        ul.append('<li class="list-group-item" style="overflow: auto;"><span style="font-weight: bold; color: '+ typemap[elem] +';">'+ elem +'</span></li>');
-
-      });
-
-      typelist.append(ul);
-      $('#legend').append(typelist);
-
-      var originlist = $('<div></div>');
-
-      originlist.append('<h5>Datasets<h5>');
-      var ul = $('<ul class="list-group"></ul>');
-
-
-      origins.forEach(function(elem){
-        console.log(elem);
-        ul.append('<li class="list-group-item" style="overflow: auto;"><span style="font-weight: bold; color: '+ originmap[elem] +';">'+ elem.replace('http://data.socialhistory.org/resource/','csdh:') +'</span></li>');
-
-      });
-
-      originlist.append(ul);
-      $('#legend').append(originlist);
-
-    }
-
-
     function init_graph(graph){
-      var width = 1200,
+      var width = 900,
           height = 600;
 
       // var color = d3.scale.category20b();
@@ -204,7 +152,7 @@
       var color = d3.scale.ordinal().range(colorbrewer.Paired[3]);
 
       var force = d3.layout.force()
-          .charge(-120)
+          .charge(-320)
           .linkDistance(50)
           .size([width, height]);
 
@@ -221,7 +169,7 @@
                    "<img src='"+ d.image +"'></img>";
           } else {
             var content = "<h5>" + d.name.replace('http://data.socialhistory.org/resource/','csdh:') + "</h5>"+
-                   "<strong>Type:</strong> <span style='color: "+ color(d.type) +";'>" + d.type + "</span><br/>" +
+                  //  "<strong>Type:</strong> <span style='color: "+ color(d.type) +";'>" + d.type + "</span><br/>" +
                    "<strong>Origin:</strong> <span style='color: "+ color2(d.origin) +";'>" + d.origin.replace('http://data.socialhistory.org/resource/','csdh:') + "</span>";
           }
           return content
@@ -250,46 +198,60 @@
           .on('mouseover', tip.show)
           .on('mouseout', tip.hide)
           .on('click', function(d){
-            window.open(d.name);
+            window.open('http://data.clariah-sdh.eculture.labs.vu.nl/browse?uri=' + d.name);
           });
 
       node.append("title")
           .text(function(d) { return d.name.replace('http://data.socialhistory.org/resource/','csdh:'); });
 
-      node.append("circle")
-          .attr("r", function(d) {
-                          if (d.type == 'dataset') {
-                            return 15;
-                          } else {
-                            return 5;
-                          }
-                     })
-          .style("fill", function(d) {
-                          if (d.type == 'person') {
-                            return "#000";
-                          } else {
-                            origins.add(d.origin); originmap[d.origin] = color2(d.origin); return color2(d.origin);
-                          }
-                          });
+      // node.append("circle")
+      //     .attr("r", function(d) {
+      //                     if (d.type == 'dataset') {
+      //                       return 15;
+      //                     } else {
+      //                       return 5;
+      //                     }
+      //                })
+      //     .style("fill", function(d) {
+      //                     if (d.type == 'person') {
+      //                       return "#000";
+      //                     } else {
+      //                       origins.add(d.origin); originmap[d.origin] = color2(d.origin); return color2(d.origin);
+      //                     }
+      //                     });
+      //
+      // node.append("circle")
+      //     .attr("r", function(d) {
+      //                     if (d.type == 'person') {
+      //                       return 7;
+      //                     } else if (d.type == 'dataset') { return 18; } else { return 8;}
+      //                })
+      //     .attr("class", "outer-circle")
+      //     .style("stroke", function(d) {
+      //                     types.add(d.type);
+      //                     if (d.type == 'person') {
+      //                       typemap[d.type] = '#000';
+      //                     } else {
+      //
+      //                       typemap[d.type] = color(d.type);
+      //                       return color(d.type);
+      //                     }});
 
-      node.append("circle")
-          .attr("r", function(d) {
-                          if (d.type == 'person') {
-                            return 7;
-                          } else if (d.type == 'dataset') { return 18; } else { return 8;}
-                     })
-          .attr("class", "outer-circle")
-          .style("stroke", function(d) {
-                          types.add(d.type);
-                          if (d.type == 'person') {
-                            typemap[d.type] = '#000';
-                          } else {
+      node.append("text")
+          .attr('font-family', 'FontAwesome')
+          .attr('font-size', function(d){ return '2em';})
+          .attr('alignment-baseline', 'middle')
+          .attr('text-anchor', 'middle')
+          .text(function(d) {
+                              if (d.type == 'person'){
+                                return '\uf007';
+                              } else if (d.type == 'dataset'){
+                                return '\uf187';
+                              } else if (d.type == 'dimension'){
+                                return '\uf013';
+                              }
 
-                            typemap[d.type] = color(d.type);
-                            return color(d.type);
-                          }});
-
-
+                            });
 
 
       force.on("tick", function() {
@@ -299,8 +261,8 @@
             .attr("y2", function(d) { return d.target.y; });
 
         node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
-        // node.attr("cx", function(d) { return d.x; })
-        //     .attr("cy", function(d) { return d.y; });
+        node.attr("cx", function(d) { return d.x; })
+            .attr("cy", function(d) { return d.y; });
       });
 
       return force

@@ -24,8 +24,8 @@ log.setLevel(logging.DEBUG)
 def specs():
     swag = swagger(app)
     swag['info']['version'] = "0.0.1"
-    swag['info']['title'] = "CSDH API"
-    swag['info']['description'] = "API for the CLARIAH Structured Data Hub"
+    swag['info']['title'] = "CSDH Inspector API"
+    swag['info']['description'] = "API for the CLARIAH Structured Data Hub Inspector"
     swag['host'] = "localhost:5000"
     swag['schemes'] = ['http']
     swag['basePath'] = '/'

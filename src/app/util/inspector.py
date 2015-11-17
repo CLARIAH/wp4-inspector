@@ -144,7 +144,7 @@ def build_graph(results):
                 print "Edge between {} and {}".format(r['dataset2'], r['person2'])
                 g.add_edge(r['dataset2'], r['person2'])
             elif 'name2' in r:
-                print "Edge between {} and {}".format(r['dataset2'], r['person2'])
+                print "Edge between {} and {}".format(r['dimension2'], r['person2'])
                 g.add_edge(r['dimension2'], r['person2'])
 
     return g
@@ -158,6 +158,8 @@ def update(graph=None):
     else:
         results = graph.query(edges_query)
         results = [r.asdict() for r in results]
+
+    print results
 
     # results = query()
     # results = dictize(results)
