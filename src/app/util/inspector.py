@@ -16,18 +16,19 @@ edges_query = """
 
 
     SELECT DISTINCT ?dataset ?dimension ?person ?name ?image ?dataset2 ?dimension2 ?person2 ?name2 ?image2 WHERE {
-        GRAPH ?provenance_graph {
-            ?assertion_graph prov:wasAttributedTo ?person .
-        }
-        ?person foaf:depiction ?image .
-        ?person foaf:name      ?name .
-        GRAPH ?assertion_graph {
-            ?dataset qb:structure/qb:component/qb:dimension ?dimension .
-            { ?dimension rdfs:subPropertyOf ?dimension2 . }
-            UNION
-            { ?dimension2 rdfs:subPropertyOf ?dimension .}
-        }
-          OPTIONAL {
+        {
+            GRAPH ?provenance_graph {
+                ?assertion_graph prov:wasAttributedTo ?person .
+            }
+            ?person foaf:depiction ?image .
+            ?person foaf:name      ?name .
+            GRAPH ?assertion_graph {
+                ?dataset qb:structure/qb:component/qb:dimension ?dimension .
+                { ?dimension rdfs:subPropertyOf ?dimension2 . }
+                UNION
+                { ?dimension2 rdfs:subPropertyOf ?dimension .}
+            }
+            OPTIONAL {
             GRAPH ?assertion_graph2 {
                     {
                         ?dataset2 qb:structure/qb:component/qb:dimension ?dimension2 .
@@ -42,7 +43,10 @@ edges_query = """
             }
             ?person2 foaf:name ?name2 .
             ?person2 foaf:depiction ?image2 .
-          }
+            }
+        } UNION {
+            ?dataset qb:structure/qb:component/qb:dimension ?dimension .
+        }
     }
 """
 
@@ -131,8 +135,10 @@ def build_graph(results):
 
         print "Edge between {} and {}".format(r['dataset'], r['dimension'])
         g.add_edge(r['dataset'], r['dimension'])
-        print "Edge between {} and {}".format(r['dataset'], r['person'])
-        g.add_edge(r['dataset'], r['person'])
+
+        if 'person' in r:
+            print "Edge between {} and {}".format(r['dataset'], r['person'])
+            g.add_edge(r['dataset'], r['person'])
 
         if 'dimension2' in r:
             print "dimension2 in r: {}".format(r['dimension2'])
