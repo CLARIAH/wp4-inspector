@@ -21,7 +21,7 @@ edges_query = """
                 ?assertion_graph prov:wasAttributedTo ?person .
             }
             ?person foaf:depiction ?image .
-            ?person foaf:name      ?name .
+            ?person foaf:name ?name .
             GRAPH ?assertion_graph {
                 ?dataset qb:structure/qb:component/qb:dimension ?dimension .
                 { ?dimension rdfs:subPropertyOf ?dimension2 . }
@@ -45,7 +45,14 @@ edges_query = """
             ?person2 foaf:depiction ?image2 .
             }
         } UNION {
-            ?dataset qb:structure/qb:component/qb:dimension ?dimension .
+            GRAPH ?provenance_graph {
+                ?assertion_graph prov:wasAttributedTo ?person .
+            }
+            ?person foaf:depiction ?image .
+            ?person foaf:name ?name .
+            GRAPH ?assertion_graph {
+                ?dataset qb:structure/qb:component/qb:dimension ?dimension .
+            }
         }
     }
 """
