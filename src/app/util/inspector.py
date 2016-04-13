@@ -26,23 +26,32 @@ edges_query = """
                 ?dataset qb:structure/qb:component/qb:dimension ?dimension .
                 { ?dimension rdfs:subPropertyOf ?dimension2 . }
                 UNION
-                { ?dimension2 rdfs:subPropertyOf ?dimension .}
+                { ?dimension2 rdfs:subPropertyOf ?dimension . }
+                UNION
+                {
+                    ?dimension rdfs:subPropertyOf ?joint_parent .
+                }
             }
             OPTIONAL {
-            GRAPH ?assertion_graph2 {
-                    {
-                        ?dataset2 qb:structure/qb:component/qb:dimension ?dimension2 .
-                    }
-                    UNION
-                    {
-                        ?dimension2 rdfs:label [] .
-                    }
-            }
-            GRAPH ?provenance_graph2 {
-                  ?assertion_graph2 prov:wasAttributedTo ?person2
-            }
-            ?person2 foaf:name ?name2 .
-            ?person2 foaf:depiction ?image2 .
+                GRAPH ?assertion_graph2 {
+                        {
+                            ?dataset2 qb:structure/qb:component/qb:dimension ?dimension2 .
+                        }
+                        UNION
+                        {
+                            ?dimension2 rdfs:label [] .
+                        }
+                        UNION
+                        {
+                            ?dimension2 rdfs:subPropertyOf ?joint_parent .
+                        }
+                }
+                GRAPH ?provenance_graph2 {
+                      ?assertion_graph2 prov:wasAttributedTo ?person2
+                }
+                ?person2 foaf:name ?name2 .
+                ?person2 foaf:depiction ?image2 .
+                FILTER(?assertion_graph != ?assertion_graph2)
             }
         } UNION {
             GRAPH ?provenance_graph {
