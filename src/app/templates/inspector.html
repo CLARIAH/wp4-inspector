@@ -99,7 +99,7 @@
 <script src="{{url_for('.static', filename='colorbrewer.js')}}"></script>
 <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/0.9.16/socket.io.min.js"></script>
 <script type="text/javascript" charset="utf-8">
-    var socket = io.connect('http://' + document.domain + ':' + location.port + '/inspector');
+    var socket = io.connect('http://' + document.domain + ':' + location.port + '/');
     var force;
 
     var types = new Set([]);
@@ -136,7 +136,7 @@
 
     // First time we load...
     $(function() {
-        $.get('/inspector/graph', function(data){
+        $.get('/graph', function(data){
           force = init_graph(data);
         });
     });

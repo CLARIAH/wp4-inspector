@@ -34,7 +34,7 @@ def specs():
     return jsonify(swag)
 
 
-@app.route('/inspector')
+@app.route('/')
 def inspector():
     """
     Returns the Inspector Homepage
@@ -54,7 +54,7 @@ def inspector():
     return render_template('inspector.html')
 
 
-@app.route('/inspector/graph')
+@app.route('/graph')
 def inspector_graph():
     """
     Build a graph of dimensions, datasets and authors present in the CSDH
@@ -121,7 +121,7 @@ def inspector_graph():
 
 
 # Socket IO handlers
-@socketio.on('message', namespace='/inspector')
+@socketio.on('message', namespace='/')
 def message(json):
     log.debug('SocketIO message:\n' + str(json))
 
