@@ -1,0 +1,10 @@
+workers = 1
+worker_class = 'gevent'
+bind = '0.0.0.0:5000'
+pidfile = '/tmp/gunicorn-inspector.pid'
+debug = True
+reload = True
+loglevel = 'info'
+errorlog = '/tmp/gunicorn_inspector_error.log'
+accesslog = '/tmp/gunicorn_inspector_access.log'
+daemon = False
