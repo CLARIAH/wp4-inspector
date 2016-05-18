@@ -4,67 +4,122 @@ import requests
 import json
 from networkx.readwrite import json_graph
 
-
 edges_query = """
-    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-    PREFIX dct: <http://purl.org/dc/terms/>
-    PREFIX prov: <http://www.w3.org/ns/prov#>
-    PREFIX qb: <http://purl.org/linked-data/cube#>
-    PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX dct: <http://purl.org/dc/terms/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX qb: <http://purl.org/linked-data/cube#>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX np: <http://www.nanopub.org/nschema#>
 
 
-    SELECT DISTINCT ?dataset ?dimension ?person ?name ?image ?dataset2 ?dimension2 ?person2 ?name2 ?image2 WHERE {
-        {
-            GRAPH ?provenance_graph {
-                ?assertion_graph prov:wasAttributedTo ?person .
-            }
-            ?person foaf:depiction ?image .
-            ?person foaf:name ?name .
-            GRAPH ?assertion_graph {
-                ?dataset qb:structure/qb:component/qb:dimension ?dimension .
-                { ?dimension rdfs:subPropertyOf ?dimension2 . }
-                UNION
-                { ?dimension2 rdfs:subPropertyOf ?dimension . }
-                UNION
-                {
-                    ?dimension rdfs:subPropertyOf ?joint_parent .
-                }
-            }
-            OPTIONAL {
-                GRAPH ?assertion_graph2 {
-                        {
-                            ?dataset2 qb:structure/qb:component/qb:dimension ?dimension2 .
-                        }
-                        UNION
-                        {
-                            ?dimension2 rdfs:label [] .
-                        }
-                        UNION
-                        {
-                            ?dimension2 rdfs:subPropertyOf ?joint_parent .
-                        }
-                }
-                GRAPH ?provenance_graph2 {
-                      ?assertion_graph2 prov:wasAttributedTo ?person2
-                }
-                ?person2 foaf:name ?name2 .
-                ?person2 foaf:depiction ?image2 .
-                FILTER(?assertion_graph != ?assertion_graph2)
-            }
-        } UNION {
-            GRAPH ?provenance_graph {
-                ?assertion_graph prov:wasAttributedTo ?person .
-            }
-            ?person foaf:depiction ?image .
-            ?person foaf:name ?name .
-            GRAPH ?assertion_graph {
-                ?dataset qb:structure/qb:component/qb:dimension ?dimension .
+SELECT DISTINCT ?dataset ?dimension ?person ?name ?image ?dataset2 ?dimension2 ?person2 ?name2 ?image2 WHERE {
+
+    	?nanopublication a np:Nanopublication .
+    	?nanopublication np:hasProvenance ?provenance_graph .
+    	?nanopublication np:hasAssertion ?assertion_graph .
+        GRAPH ?provenance_graph {
+            ?assertion_graph prov:wasAttributedTo ?person .
+        }
+        ?person foaf:depiction ?image .
+        ?person foaf:name ?name .
+        GRAPH ?assertion_graph {
+            ?dataset qb:structure/qb:component/qb:dimension ?dimension .
+            { ?dimension rdfs:subPropertyOf ?dimension2 . }
+            UNION
+            { ?dimension2 rdfs:subPropertyOf ?dimension . }
+            UNION
+            {
+                ?dimension rdfs:subPropertyOf ?joint_parent .
             }
         }
-    }
+        OPTIONAL {
+            GRAPH ?assertion_graph2 {
+                    {
+                        ?dataset2 qb:structure/qb:component/qb:dimension ?dimension2 .
+                    }
+                    UNION
+                    {
+                        ?dimension2 rdfs:label [] .
+                    }
+                    UNION
+                    {
+                        ?dimension2 rdfs:subPropertyOf ?joint_parent .
+                    }
+            }
+            GRAPH ?provenance_graph2 {
+                  ?assertion_graph2 prov:wasAttributedTo ?person2
+            }
+            ?person2 foaf:name ?name2 .
+            ?person2 foaf:depiction ?image2 .
+            FILTER(?assertion_graph != ?assertion_graph2)
+        }
+}
 """
+
+
+# edges_query = """
+#     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+#     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+#     PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+#     PREFIX dct: <http://purl.org/dc/terms/>
+#     PREFIX prov: <http://www.w3.org/ns/prov#>
+#     PREFIX qb: <http://purl.org/linked-data/cube#>
+#     PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+#
+#
+#     SELECT DISTINCT ?dataset ?dimension ?person ?name ?image ?dataset2 ?dimension2 ?person2 ?name2 ?image2 WHERE {
+#         {
+#             GRAPH ?provenance_graph {
+#                 ?assertion_graph prov:wasAttributedTo ?person .
+#             }
+#             ?person foaf:depiction ?image .
+#             ?person foaf:name ?name .
+#             GRAPH ?assertion_graph {
+#                 ?dataset qb:structure/qb:component/qb:dimension ?dimension .
+#                 { ?dimension rdfs:subPropertyOf ?dimension2 . }
+#                 UNION
+#                 { ?dimension2 rdfs:subPropertyOf ?dimension . }
+#                 UNION
+#                 {
+#                     ?dimension rdfs:subPropertyOf ?joint_parent .
+#                 }
+#             }
+#             OPTIONAL {
+#                 GRAPH ?assertion_graph2 {
+#                         {
+#                             ?dataset2 qb:structure/qb:component/qb:dimension ?dimension2 .
+#                         }
+#                         UNION
+#                         {
+#                             ?dimension2 rdfs:label [] .
+#                         }
+#                         UNION
+#                         {
+#                             ?dimension2 rdfs:subPropertyOf ?joint_parent .
+#                         }
+#                 }
+#                 GRAPH ?provenance_graph2 {
+#                       ?assertion_graph2 prov:wasAttributedTo ?person2
+#                 }
+#                 ?person2 foaf:name ?name2 .
+#                 ?person2 foaf:depiction ?image2 .
+#                 FILTER(?assertion_graph != ?assertion_graph2)
+#             }
+#         } UNION {
+#             GRAPH ?provenance_graph {
+#                 ?assertion_graph prov:wasAttributedTo ?person .
+#             }
+#             ?person foaf:depiction ?image .
+#             ?person foaf:name ?name .
+#             GRAPH ?assertion_graph {
+#                 ?dataset qb:structure/qb:component/qb:dimension ?dimension .
+#             }
+#         }
+#     }
+# """
 
 # edges_query = """
 #     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
