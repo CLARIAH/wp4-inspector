@@ -16,10 +16,9 @@ PREFIX np: <http://www.nanopub.org/nschema#>
 
 
 SELECT DISTINCT ?dataset ?dimension ?person ?name ?image ?dataset2 ?dimension2 ?person2 ?name2 ?image2 WHERE {
-
     	?nanopublication a np:Nanopublication .
     	?nanopublication np:hasProvenance ?provenance_graph .
-    	?nanopublication np:hasAssertion ?assertion_graph .
+    	?nanopublication np:hasAssertion ?assertion_graph .		{
         GRAPH ?provenance_graph {
             ?assertion_graph prov:wasAttributedTo ?person .
         }
@@ -30,22 +29,14 @@ SELECT DISTINCT ?dataset ?dimension ?person ?name ?image ?dataset2 ?dimension2 ?
             { ?dimension rdfs:subPropertyOf ?dimension2 . }
             UNION
             { ?dimension2 rdfs:subPropertyOf ?dimension . }
-            UNION
-            {
-                ?dimension rdfs:subPropertyOf ?joint_parent .
-            }
         }
         OPTIONAL {
+    		GRAPH ?assertion_graph {
+    			?dimension rdfs:subPropertyOf ?joint_parent .
+    		}
             GRAPH ?assertion_graph2 {
                     {
                         ?dataset2 qb:structure/qb:component/qb:dimension ?dimension2 .
-                    }
-                    UNION
-                    {
-                        ?dimension2 rdfs:label [] .
-                    }
-                    UNION
-                    {
                         ?dimension2 rdfs:subPropertyOf ?joint_parent .
                     }
             }
@@ -55,6 +46,16 @@ SELECT DISTINCT ?dataset ?dimension ?person ?name ?image ?dataset2 ?dimension2 ?
             ?person2 foaf:name ?name2 .
             ?person2 foaf:depiction ?image2 .
             FILTER(?assertion_graph != ?assertion_graph2)
+        }
+        } UNION {
+            GRAPH ?provenance_graph {
+                ?assertion_graph prov:wasAttributedTo ?person .
+            }
+            ?person foaf:depiction ?image .
+            ?person foaf:name ?name .
+            GRAPH ?assertion_graph {
+                ?dataset qb:structure/qb:component/qb:dimension ?dimension .
+            }
         }
 }
 """
@@ -88,6 +89,7 @@ SELECT DISTINCT ?dataset ?dimension ?person ?name ?image ?dataset2 ?dimension2 ?
 #                 }
 #             }
 #             OPTIONAL {
+
 #                 GRAPH ?assertion_graph2 {
 #                         {
 #                             ?dataset2 qb:structure/qb:component/qb:dimension ?dimension2 .
@@ -108,16 +110,16 @@ SELECT DISTINCT ?dataset ?dimension ?person ?name ?image ?dataset2 ?dimension2 ?
 #                 ?person2 foaf:depiction ?image2 .
 #                 FILTER(?assertion_graph != ?assertion_graph2)
 #             }
-#         } UNION {
-#             GRAPH ?provenance_graph {
-#                 ?assertion_graph prov:wasAttributedTo ?person .
-#             }
-#             ?person foaf:depiction ?image .
-#             ?person foaf:name ?name .
-#             GRAPH ?assertion_graph {
-#                 ?dataset qb:structure/qb:component/qb:dimension ?dimension .
-#             }
-#         }
+# } UNION {
+#     GRAPH ?provenance_graph {
+#         ?assertion_graph prov:wasAttributedTo ?person .
+#     }
+#     ?person foaf:depiction ?image .
+#     ?person foaf:name ?name .
+#     GRAPH ?assertion_graph {
+#         ?dataset qb:structure/qb:component/qb:dimension ?dimension .
+#     }
+# }
 #     }
 # """
 
