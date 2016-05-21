@@ -20,7 +20,7 @@ dimensions_query = PREFIXES + """
       {
         ?source_np np:hasAssertion ?source_assertion .
         GRAPH ?source_assertion {
-    	   ?source_dataset qb:structure/qb:component/qb:dimension ?source_dimension .
+    	   ?source_dataset qb:structure/qb:component/(qb:dimension|qb:measure) ?source_dimension .
         }
       }
       UNION
