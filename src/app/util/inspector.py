@@ -4,61 +4,75 @@ import requests
 import json
 from networkx.readwrite import json_graph
 
-edges_query = """
-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-PREFIX dct: <http://purl.org/dc/terms/>
-PREFIX prov: <http://www.w3.org/ns/prov#>
-PREFIX qb: <http://purl.org/linked-data/cube#>
-PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-PREFIX np: <http://www.nanopub.org/nschema#>
 
-
-SELECT DISTINCT ?dataset ?dimension ?person ?name ?image ?dataset2 ?dimension2 ?person2 ?name2 ?image2 WHERE {
-    	?nanopublication a np:Nanopublication .
-    	?nanopublication np:hasProvenance ?provenance_graph .
-    	?nanopublication np:hasAssertion ?assertion_graph .		{
-        GRAPH ?provenance_graph {
-            ?assertion_graph prov:wasAttributedTo ?person .
-        }
-        ?person foaf:depiction ?image .
-        ?person foaf:name ?name .
-        GRAPH ?assertion_graph {
-            ?dataset qb:structure/qb:component/qb:dimension ?dimension .
-            { ?dimension rdfs:subPropertyOf ?dimension2 . }
-            UNION
-            { ?dimension2 rdfs:subPropertyOf ?dimension . }
-        }
-        OPTIONAL {
-    		GRAPH ?assertion_graph {
-    			?dimension rdfs:subPropertyOf ?joint_parent .
-    		}
-            GRAPH ?assertion_graph2 {
-                    {
-                        ?dataset2 qb:structure/qb:component/qb:dimension ?dimension2 .
-                        ?dimension2 rdfs:subPropertyOf ?joint_parent .
-                    }
-            }
-            GRAPH ?provenance_graph2 {
-                  ?assertion_graph2 prov:wasAttributedTo ?person2
-            }
-            ?person2 foaf:name ?name2 .
-            ?person2 foaf:depiction ?image2 .
-            FILTER(?assertion_graph != ?assertion_graph2)
-        }
-        } UNION {
-            GRAPH ?provenance_graph {
-                ?assertion_graph prov:wasAttributedTo ?person .
-            }
-            ?person foaf:depiction ?image .
-            ?person foaf:name ?name .
-            GRAPH ?assertion_graph {
-                ?dataset qb:structure/qb:component/qb:dimension ?dimension .
-            }
-        }
-}
+PREFIXES = """
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX np: <http://www.nanopub.org/nschema#>
+    PREFIX prov: <http://www.w3.org/ns/prov#>
+    PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+    PREFIX example: <http://www.example.org/rdf#>
+    PREFIX qb: <http://purl.org/linked-data/cube#>
 """
+
+dimensions_query = PREFIXES + """
+    SELECT DISTINCT ?source_dataset ?source_dimension WHERE {
+      {
+        ?source_np np:hasAssertion ?source_assertion .
+        GRAPH ?source_assertion {
+    	   ?source_dataset qb:structure/qb:component/qb:dimension ?source_dimension .
+        }
+      }
+      UNION
+      {
+        ?source_dimension a qb:DimensionProperty .
+      }
+      UNION
+      {
+        ?source_dimension a qb:MeasureProperty .
+      }
+      UNION
+      {
+        ?source_dimension a qb:CodedProperty .
+      }
+    }
+"""
+
+provenance_query = PREFIXES + """
+    SELECT DISTINCT ?source_dataset ?person ?label ?image  WHERE {
+		?source_np np:hasProvenance ?source_provenance .
+        ?source_np np:hasAssertion ?source_assertion .
+        GRAPH ?source_assertion {
+            ?source_dataset a qb:DataSet .
+        }
+        GRAPH ?source_provenance {
+         	?source_assertion prov:wasAttributedTo ?p .
+        }
+        ?p a foaf:Person .
+        ?p foaf:name ?label .
+        OPTIONAL { ?p foaf:depiction ?image . }
+
+        BIND(IF(bound(?p), ?p, example:datalegend) as ?person)
+    }
+"""
+
+
+mappings_query = """
+    SELECT DISTINCT ?source_dimension ?target_dimension WHERE {
+      [] qb:dimension|qb:measure ?source_dimension .
+
+      { ?source_dimension rdfs:subPropertyOf ?target_dimension . }
+      UNION
+      { ?target_dimension rdfs:subPropertyOf ?source_dimension . }
+      UNION
+      {
+        ?source_dimension rdfs:subPropertyOf ?shared_parent_dimension .
+        ?target_dimension rdfs:subPropertyOf ?shared_parent_dimension .
+        FILTER(?source_dimension != ?target_dimension)
+      }
+    }
+"""
+
 
 
 # edges_query = """
@@ -174,12 +188,12 @@ SELECT DISTINCT ?dataset ?dimension ?person ?name ?image ?dataset2 ?dimension2 ?
 # """
 
 
-def query():
+def query(q):
     # This is old style, but leaving for backwards compatibility with earlier versions of Stardog
     QUERY_HEADERS = {'Accept': 'application/sparql-results+json'}
 
     result = requests.get(ENDPOINT_URL,
-                          params={'query': edges_query},
+                          params={'query': q},
                           headers=QUERY_HEADERS)
 
     results = json.loads(result.content)['results']['bindings']
@@ -187,72 +201,55 @@ def query():
     return results
 
 
-def build_graph(results):
+def build_graph(dimensions, provenance, mappings):
     g = nx.DiGraph()
 
-    for r in results:
-        for k, v in r.items():
-            if v == 'tag:stardog:api:':
-                # Skip the stardog specific stuff that we don't need
-                continue
-            elif k in ['dataset', 'dimension']:
-                g.add_node(v, {'name': v, 'type': k, 'origin': r['dataset']})
-            elif k in ['person']:
-                g.add_node(v, {'name': v, 'label': r['name'], 'type': 'person', 'image': r['image']})
-            elif k in ['person2'] and not g.has_node(v):
-                g.add_node(v, {'name': v, 'label': r['name2'], 'type': 'person', 'image': r['image2']})
-            elif not g.has_node(v) and k not in ['image2', 'image', 'name', 'name2']:
-                print "Adding external {}".format(k)
-                k = k.rstrip('2')
-                g.add_node(v, {'name': v, 'type': k, 'origin': 'external'})
+    for r in dimensions:
+        if 'source_dataset' not in r:
+            if r['source_dimension'] not in g.nodes():
+                g.add_node(r['source_dimension'], {'name': r['source_dimension'], 'type': 'dimension', 'origin': 'external'})
+        else:
+            g.add_node(r['source_dimension'],
+                       {'name': r['source_dimension'], 'type': 'dimension', 'origin': r['source_dataset']})
 
-        print "Edge between {} and {}".format(r['dataset'], r['dimension'])
-        g.add_edge(r['dataset'], r['dimension'])
+            g.add_node(r['source_dataset'],
+                       {'name': r['source_dataset'], 'type': 'dataset', 'origin': r['source_dataset']})
 
-        if 'person' in r:
-            print "Edge between {} and {}".format(r['dataset'], r['person'])
-            g.add_edge(r['dataset'], r['person'])
+            g.add_edge(r['source_dataset'], r['source_dimension'])
 
-        if 'dimension2' in r:
-            print "dimension2 in r: {}".format(r['dimension2'])
-            print "Edge between {} and {}".format(r['dimension'], r['dimension2'])
-            g.add_edge(r['dimension'], r['dimension2'])
-            if 'dataset2' in r:
-                print "Edge between {} and {}".format(r['dataset2'], r['dimension2'])
-                g.add_edge(r['dataset2'], r['dimension2'])
-                print "Edge between {} and {}".format(r['dataset2'], r['person2'])
-                g.add_edge(r['dataset2'], r['person2'])
-            elif 'name2' in r:
-                print "Edge between {} and {}".format(r['dimension2'], r['person2'])
-                g.add_edge(r['dimension2'], r['person2'])
+    for r in provenance:
+        if 'image' in r:
+            g.add_node(r['person'], {'name': r['person'], 'label': r['label'], 'type': 'person', 'image': r['image']})
+        else:
+            g.add_node(r['person'], {'name': r['person'], 'label': r['label'], 'type': 'person'})
+
+        g.add_edge(r['source_dataset'], r['person'])
+
+    for r in mappings:
+        if not r['target_dimension'] in g.nodes():
+            print r['target_dimension'], "not in graph"
+            g.add_node(r['target_dimension'], {'name': r['target_dimension'], 'type': 'dimension', 'origin': 'external'})
+
+        g.add_edge(r['source_dimension'], r['target_dimension'])
 
     return g
 
 
 def update(graph=None):
-    print "Graph is: {}".format(graph)
-    if graph is None:
-        results = query()
-        results = dictize(results)
-    else:
-        results = graph.query(edges_query)
-        results = [r.asdict() for r in results]
 
-    print results
+    dimensions = dictize(query(dimensions_query))
+    provenance = dictize(query(provenance_query))
+    mappings = dictize(query(mappings_query))
 
-    # results = query()
-    # results = dictize(results)
-
-    g = build_graph(results)
+    g = build_graph(dimensions, provenance, mappings)
 
     data = json_graph.node_link_data(g)
-
-    print data
 
     with open('graph.json', 'w') as f:
         json.dump(data, f)
 
     return data
+
 
 def dictize(sparql_results):
     # If the results are a dict, just return the list of bindings

@@ -156,17 +156,20 @@
           .linkDistance(50)
           .size([width, height]);
 
+
       var svg = d3.select("#graph").append("svg")
           .attr("width", width)
-          .attr("height", height);
+          .attr("height", height)
 
       var tip = d3.tip()
         .attr('class', 'd3-tip')
         .offset([-10, 0])
         .html(function(d) {
-          if (d.type == 'person'){
+          if (d.type == 'person' && d.label != undefined ){
             var content = "<h5>" + d.label + "</h5>"+
                    "<img src='"+ d.image +"'></img>";
+          } else if (d.type == 'person' && d.label == 'datalegend' ) {
+            var content = "<img src='static/datalegend-text-white-small-96dpi.png'></img>";
           } else {
             var content = "<h5>" + d.name.replace('http://data.socialhistory.org/resource/','csdh:') + "</h5>"+
                   //  "<strong>Type:</strong> <span style='color: "+ color(d.type) +";'>" + d.type + "</span><br/>" +
@@ -203,7 +206,9 @@
           });
 
       node.append("title")
-          .text(function(d) { return d.name.replace('http://data.socialhistory.org/resource/','csdh:'); });
+          .text(function(d) { console.log(d); return d.name.replace('http://data.socialhistory.org/resource/','csdh:'); });
+
+
 
       // node.append("circle")
       //     .attr("r", function(d) {
@@ -251,7 +256,9 @@
                                 }
           })
           .text(function(d) {
-                              if (d.type == 'person'){
+                              if (d.type == 'person' && d.label == 'datalegend'){
+                                return '\uf085';
+                              } else if (d.type == 'person' && d.label != undefined ){
                                 return '\uf007';
                               } else if (d.type == 'dataset'){
                                 return '\uf1b3';
