@@ -110,8 +110,8 @@
       .enter().append("g")
         .attr("class", "node")
         .call(force.drag)
-        .on('mouseover', tip.show)
-        .on('mouseout', tip.hide)
+        // .on('mouseover', tip.show)
+        // .on('mouseout', tip.hide)
         .on('click', function(d){
           if (d3.event.defaultPrevented) return;
           window.open('http://data.clariah-sdh.eculture.labs.vu.nl/browse?uri=' + encodeURIComponent(d.name));
@@ -120,6 +120,38 @@
     node.append("title")
         .text(function(d) { console.log(d); return d.name.replace('http://data.socialhistory.org/resource/','csdh:'); });
 
+    var linkedByIndex = {};
+    graph.links.forEach(function(d) {
+        linkedByIndex[d.source.index + "," + d.target.index] = 1;
+    });
+
+    function isConnected(a, b) {
+        return linkedByIndex[a.index + "," + b.index] || linkedByIndex[b.index + "," + a.index];
+    }
+
+    node.on("mouseover", function(d){
+                            tip.show(d);
+                            node.classed("node-active", function(o) {
+                                thisOpacity = isConnected(d, o) ? true : false;
+                                this.setAttribute('fill-opacity', thisOpacity);
+                                return thisOpacity;
+                            });
+
+                            link.classed("link-active", function(o) {
+                                return o.source === d || o.target === d ? true : false;
+                            });
+
+                            d3.select(this).classed("node-active", true);
+                            d3.select(this).select("circle").transition()
+                                    .duration(750)
+                                    .attr("r", (d.weight * 2+ 12)*1.5);
+                    })
+
+    		.on("mouseout", function(d){
+                            tip.hide(d);
+                            node.classed("node-active", false);
+                            link.classed("link-active", false);
+                          });
 
     function zoomed() {
       container.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
