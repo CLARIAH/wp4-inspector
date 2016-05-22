@@ -56,7 +56,6 @@ provenance_query = PREFIXES + """
     }
 """
 
-
 mappings_query = """
     SELECT DISTINCT ?source_dimension ?target_dimension WHERE {
       [] qb:dimension|qb:measure ?source_dimension .
@@ -72,6 +71,55 @@ mappings_query = """
     #     FILTER(?source_dimension != ?target_dimension)
     #   }
     }
+"""
+
+
+overview_datasets_query = """
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX qb: <http://purl.org/linked-data/cube#>
+PREFIX np: <http://www.nanopub.org/nschema#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+SELECT DISTINCT ?assertion ?assertion_time ?person ?dataset ?source WHERE {
+
+  GRAPH ?assertion {
+  	?dataset a qb:DataSet .
+  }
+
+  OPTIONAL {
+    ?np np:hasAssertion ?assertion .
+    ?np np:hasProvenance ?provenance .
+    GRAPH ?provenance {
+      ?assertion prov:wasAttributedTo ?person .
+      ?assertion prov:wasDerivedFrom ?source .
+      ?assertion prov:generatedAtTime ?assertion_time .
+    }
+  }
+} ORDER BY ?person
+"""
+
+overview_datasets_and_dimensions_query = """
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX qb: <http://purl.org/linked-data/cube#>
+PREFIX np: <http://www.nanopub.org/nschema#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+SELECT DISTINCT ?dataset ?assertion ?assertion_time ?dimension ?dimension_type ?mapped_dimension WHERE {
+  GRAPH ?assertion {
+  	?dataset a qb:DataSet .
+  	?dataset qb:structure/qb:component/(qb:dimension|qb:measure) ?dimension .
+    OPTIONAL { ?dimension a ?dimension_type . }
+    OPTIONAL {?dimension rdfs:subPropertyOf ?mapped_dimension}
+  }
+
+
+      ?np np:hasAssertion ?assertion .
+      ?np np:hasProvenance ?provenance .
+      GRAPH ?provenance {
+      	?assertion prov:generatedAtTime ?assertion_time .
+      }
+  # BIND(IF(bound(?at),?at,"unknown") AS ?assertion_time ).
+} GROUP BY ?dataset ORDER BY ?assertion_time
 """
 
 
@@ -250,6 +298,13 @@ def update(graph=None):
         json.dump(data, f)
 
     return data
+
+
+def overview():
+    datasets = dictize(query(overview_datasets_query))
+    dimensions = dictize(query(overview_datasets_and_dimensions_query))
+
+    return datasets, dimensions
 
 
 def dictize(sparql_results):

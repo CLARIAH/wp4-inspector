@@ -54,6 +54,29 @@ def inspector():
     return render_template('inspector.html')
 
 
+@app.route('/overview')
+def overview():
+    """
+    Returns the Inspector Homepage
+    ---
+    tags:
+        - Table
+    produces:
+        - text/html
+    responses:
+        '200':
+            description: Inspector overview page returned
+        default:
+            description: Unexpected error
+            schema:
+              $ref: "#/definitions/Error"
+    """
+
+    datasets, dimensions = util.inspector.overview()
+
+    return render_template('overview.html', datasets=datasets, dimensions=dimensions)
+
+
 @app.route('/graph')
 def inspector_graph():
     """

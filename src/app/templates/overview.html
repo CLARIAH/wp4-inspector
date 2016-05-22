@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block navbar %}
+{% endblock %}
+
+
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      <div id='datasets'>
+        <h2>Datasets</h2>
+        <table class='table table-striped col-md-12'>
+
+            {% for group in datasets|groupby('dataset') %}
+            <thead>
+              <tr><th colspan='4'><h4><a href="{{group.grouper}}" target="_blank">{{ group.grouper|replace('http://data.socialhistory.org/resource/','dl:') }}</a></h4></th></tr>
+              <tr><th>graph</th><th class='col-md-2'>time</th><th class='col-md-5'>author</th><th class='col-md-5'>source</th></tr>
+            </thead>
+            <tbody>
+            {% for d in group.list %}
+              <tr>
+                <td><a href="{{ d.assertion }}"><span class="glyphicon glyphicon-record" aria-hidden="true"></span></a></td>
+                <td class='col-md-2'><a href="#{{group.grouper}}{{d.assertion_time}}">{{ d.assertion_time}}</a></td>
+                <td class='col-md-5'><a href="{{d.person}}" target="_blank">{{ d.person|replace('http://data.socialhistory.org/resource/','dl:') }}</a></td>
+                <td class='col-md-5'><a href="{{d.source}}" target="_blank">{{ d.source|replace('http://data.socialhistory.org/resource/','dl:') }}</a></td>
+              </tr>
+            {% endfor %}
+            </tbody>
+            {% endfor %}
+
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <div id='dimensions'>
+        <h4>Variables</h4>
+        <table class='table table-striped col-md-12'>
+
+            {% for group in dimensions|groupby('dataset') %}
+              {% for tgroup in group.list|groupby('assertion_time')%}
+              <thead id="{{group.grouper}}{{tgroup.grouper}}">
+                <tr><th colspan='4'><h4><a href="{{group.grouper}}" target="_blank">{{ group.grouper|replace('http://data.socialhistory.org/resource/','dl:') }}</a> at {{tgroup.grouper}}</h4></th></tr>
+                <tr><th>graph</th><th class='col-md-2'>type</th><th class='col-md-5'>variable</th><th class='col-md-5'>mapped to</th></tr>
+              </thead>
+              <tbody>
+              {% for d in tgroup.list %}
+                <tr>
+                  <td><a href="{{ d.assertion }}"><span class="glyphicon glyphicon-record" aria-hidden="true"></span></a></td>
+                  <td class='col-md-2'><a href="{{d.dimension_type}}" target="_blank">{{ d.dimension_type|replace('http://purl.org/linked-data/cube#','qb:') }}</a></td>
+                  <td class='col-md-5'><a href="{{d.dimension}}" target="_blank">{{ d.dimension|replace('http://data.socialhistory.org/resource/','dl:') }}</a></td>
+                  <td class='col-md-5'><a href="{{d.mapped_dimension}}" target="_blank">{{ d.mapped_dimension|replace('http://data.socialhistory.org/resource/','dl:') }}</a></td>
+                </tr>
+              {% endfor %}
+              </tbody>
+              {% endfor %}
+            {% endfor %}
+
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+
+{% block styles %}
+
+{{ super() }}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% endblock %}
