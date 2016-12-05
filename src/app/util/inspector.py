@@ -18,10 +18,11 @@ PREFIXES = """
 dimensions_query = PREFIXES + """
     SELECT DISTINCT ?source_dataset ?source_dimension WHERE {
       {
-        ?source_np np:hasAssertion ?source_assertion .
-        GRAPH ?source_assertion {
+        # ?source_np np:hasAssertion ?source_assertion .
+        # GRAPH ?source_assertion {
     	   ?source_dataset qb:structure/qb:component/(qb:dimension|qb:measure) ?source_dimension .
-        }
+           ?source_dataset a qb:DataSet .
+        # }
       }
       UNION
       {
@@ -63,13 +64,12 @@ mappings_query = """
       { ?source_dimension rdfs:subPropertyOf ?target_dimension . }
       UNION
       { ?target_dimension rdfs:subPropertyOf ?source_dimension . }
-    # The below is not needed...
-    #   UNION
-    #   {
-    #     ?source_dimension rdfs:subPropertyOf ?shared_parent_dimension .
-    #     ?target_dimension rdfs:subPropertyOf ?shared_parent_dimension .
-    #     FILTER(?source_dimension != ?target_dimension)
-    #   }
+      UNION
+      {
+        ?source_dimension rdfs:subPropertyOf ?shared_parent_dimension .
+        ?target_dimension rdfs:subPropertyOf ?shared_parent_dimension .
+        FILTER(?source_dimension != ?target_dimension)
+      }
     }
 """
 
