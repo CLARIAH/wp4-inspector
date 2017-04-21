@@ -1,6 +1,6 @@
 version: '3'
 services:
-  qber:
+  inspector:
     image: clariah/inspector:1.0.0
     build:
       context: ./
