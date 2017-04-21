@@ -1,0 +1,11 @@
+version: '3'
+services:
+  qber:
+    image: clariah/inspector:1.0.0
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    ports:
+      - "127.0.0.1:5500:5500"
+    environment:
+      - ENDPOINT_URL=http://virtuoso.clariah-sdh.eculture.labs.vu.nl/sparql
